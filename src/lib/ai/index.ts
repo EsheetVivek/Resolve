@@ -45,7 +45,7 @@ export function groq(apiKey: string, model = process.env.GROQ_MODEL ?? "llama-3.
             messages: [{ role: "system", content: system }, { role: "user", content: user }],
           }),
         });
-        if (!res.ok) throw new AiUnavailable("provider", `Groq ${res.status}`);
+        if (!res.ok) throw new AiUnavailable("provider", `Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 160)}`);
         const body = await res.json();
         return { text: body.choices?.[0]?.message?.content ?? "", tokens: body.usage?.total_tokens ?? 0, model };
       } catch (e) {
