@@ -15,13 +15,18 @@ Docs: [PRD](docs/01-PRD.md) · [System design](docs/02-SYSTEM-DESIGN.md) · [Thr
 | Milestone | State |
 | --- | --- |
 | 1. Skeleton: auth, workspaces, inbox, PII redaction, signed webhook, AI adapter with daily cap, CI | Done |
-| 2. Policy library + retrieval | Next |
-| 3. AI sorting + duplicate linking + evals | |
+| 2. Policy library: immutable versions, one-statement passages, workspace-scoped search | Done |
+| 3. AI sorting + duplicate linking + evals | Next |
 | 4. Cited drafting + commitment detection + approval with authority | |
 | 5. Dashboard (SLA, acceptance, cost) | |
 | 6. Security suite + OWASP ZAP | |
 | 7. Load test | |
 | 8. Case study | |
+
+Milestone 2 (11 more tests, 32 total): policies split into one-statement passages with stable labels
+("Billing §2.2"), published versions are immutable (old drafts can always show what they cited),
+only leads/admins publish, search covers only current versions inside the caller's workspace,
+concurrent publishes get distinct versions, and first-visit setup is race-safe (advisory locks).
 
 Milestone 1 tests (21): PII redaction (emails, phones, cards with Luhn check, PAN, Aadhaar-shaped,
 UPI IDs, account numbers), webhook signatures and replay window, field encryption, injection quoting,

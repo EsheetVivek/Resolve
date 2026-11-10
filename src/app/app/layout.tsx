@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Inbox, PenLine, Settings } from "lucide-react";
+import { BookOpenText, Inbox, PenLine, Settings } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { requireMember } from "@/lib/session";
 import { signOutAction } from "@/app/actions/auth";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 const NAV = [
   { href: "/app", label: "Inbox", icon: Inbox },
+  { href: "/app/policies", label: "Policies", icon: BookOpenText },
   { href: "/app/new", label: "Log a ticket", icon: PenLine },
   { href: "/app/settings", label: "Workspace", icon: Settings },
 ];

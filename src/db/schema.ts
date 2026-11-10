@@ -98,3 +98,39 @@ export const auditLog = pgTable("audit_log", {
   meta: jsonb("meta"),
   at: timestamp("at").notNull().defaultNow(),
 }, (t) => [index().on(t.workspaceId, t.at)]);
+
+/* ---------- Policy library (milestone 2) ---------- */
+/** A named policy (e.g. "Billing"). Its text lives in immutable versions. */
+export const policies = pgTable("policies", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [unique().on(t.workspaceId, t.slug)]);
+
+/**
+ * Published versions are never edited, so a draft can always show exactly which wording it relied on.
+ * The current version of a policy is its highest version number.
+ */
+export const policyVersions = pgTable("policy_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  policyId: uuid("policy_id").notNull().references(() => policies.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  body: text("body").notNull(),
+  note: text("note"),
+  publishedBy: text("published_by").references(() => users.id, { onDelete: "set null" }),
+  publishedAt: timestamp("published_at").notNull().defaultNow(),
+}, (t) => [unique().on(t.policyId, t.version)]);
+
+/** One citable passage of a policy version, e.g. "Billing §2.1". Full-text indexed for retrieval. */
+export const passages = pgTable("passages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  versionId: uuid("version_id").notNull().references(() => policyVersions.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  label: text("label").notNull(), // "Billing §2.1"
+  heading: text("heading").notNull(),
+  text: text("text").notNull(),
+  ord: integer("ord").notNull(),
+}, (t) => [index().on(t.versionId, t.ord), index().on(t.workspaceId)]);
