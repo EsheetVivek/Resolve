@@ -17,7 +17,7 @@ export const ticketInput = z.object({
 /** The model, through the budgeted, PII-guarded adapter. Null means "rules only". */
 export function workspaceLlm(db: DB, workspaceId: string): Llm {
   return async (system, data, task) => {
-    const out = await complete(db, { workspaceId, system, data, task, json: true, maxTokens: 150 });
+    const out = await complete(db, { workspaceId, system, data, task, json: true, maxTokens: 600 });
     return { text: out.text, model: out.model };
   };
 }

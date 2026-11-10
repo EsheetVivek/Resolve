@@ -27,33 +27,53 @@ export interface CompleteOutput { text: string; model: string; tokens: number }
 
 export interface Provider { name: string; complete(i: { system: string; user: string; maxTokens: number; json: boolean }): Promise<{ text: string; tokens: number; model: string }> }
 
-/** Groq's OpenAI-compatible endpoint (free tier). Model is configurable. */
-export function groq(apiKey: string, model = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile"): Provider {
+/**
+ * Groq's OpenAI-compatible endpoint (free tier). Model availability changes and can differ per
+ * account, so we try GROQ_MODEL (if set) then a list of current production models, and remember the
+ * first one that answers. A missing model is the only error that moves to the next one.
+ */
+const GROQ_MODELS = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"];
+let groqWorking: string | null = null;
+
+export function groq(apiKey: string, preferred = process.env.GROQ_MODEL): Provider {
+  const candidates = () => [...new Set([groqWorking, preferred, ...GROQ_MODELS].filter(Boolean) as string[])];
+  async function call(model: string, i: { system: string; user: string; maxTokens: number; json: boolean }) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20_000);
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        signal: ctrl.signal,
+        headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          model, temperature: 0, max_tokens: i.maxTokens,
+          ...(i.json ? { response_format: { type: "json_object" } } : {}),
+          messages: [{ role: "system", content: i.system }, { role: "user", content: i.user }],
+        }),
+      });
+      if (!res.ok) {
+        const text = (await res.text().catch(() => "")).slice(0, 200);
+        return { missing: res.status === 404 || /model_not_found|decommissioned/.test(text), error: `Groq ${res.status} (${model}): ${text}` };
+      }
+      const body = await res.json();
+      return { ok: { text: body.choices?.[0]?.message?.content ?? "", tokens: body.usage?.total_tokens ?? 0, model } };
+    } catch (e) {
+      return { missing: false, error: (e as Error).name === "AbortError" ? "Groq timed out" : "Groq request failed" };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
   return {
     name: "groq",
-    async complete({ system, user, maxTokens, json }) {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 20_000);
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          signal: ctrl.signal,
-          headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-          body: JSON.stringify({
-            model, temperature: 0, max_tokens: maxTokens,
-            ...(json ? { response_format: { type: "json_object" } } : {}),
-            messages: [{ role: "system", content: system }, { role: "user", content: user }],
-          }),
-        });
-        if (!res.ok) throw new AiUnavailable("provider", `Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 160)}`);
-        const body = await res.json();
-        return { text: body.choices?.[0]?.message?.content ?? "", tokens: body.usage?.total_tokens ?? 0, model };
-      } catch (e) {
-        if (e instanceof AiUnavailable) throw e;
-        throw new AiUnavailable("provider", (e as Error).name === "AbortError" ? "Groq timed out" : "Groq request failed");
-      } finally {
-        clearTimeout(timer);
+    async complete(i) {
+      let last = "No Groq model available";
+      for (const model of candidates()) {
+        const r = await call(model, i);
+        if (r.ok) { groqWorking = model; return r.ok; }
+        last = r.error!;
+        if (!r.missing) break;
       }
+      throw new AiUnavailable("provider", last);
     },
   };
 }
