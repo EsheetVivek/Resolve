@@ -31,3 +31,18 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
+
+  eval:
+    # Classification accuracy on the labelled set: rules always; AI too when the GROQ_API_KEY secret
+    # is set. Fails if the injection detector misses any attack. Report goes to the run summary.
+    runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run eval
+      - if: always()
+        run: cat evals/report.md >> "$GITHUB_STEP_SUMMARY"

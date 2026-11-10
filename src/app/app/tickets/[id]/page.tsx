@@ -6,7 +6,8 @@ import { db } from "@/db";
 import { getTicket } from "@/lib/tickets";
 import { searchPassages } from "@/lib/policies";
 import { requireMember } from "@/lib/session";
-import { Redactions, Topic, Urgency } from "@/components/badges";
+import { Injection, Redactions, Topic, Urgency } from "@/components/badges";
+import { ShieldAlert } from "lucide-react";
 import { ViewToggle } from "@/components/view-toggle";
 
 export const metadata: Metadata = { title: "Ticket" };
@@ -23,7 +24,15 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       <Link href="/app" className="btn-quiet -ml-3 px-3"><ArrowLeft aria-hidden className="size-4" />Inbox</Link>
       <h1 className="serif mt-4 text-4xl text-balance">{t.subject}</h1>
       <p className="mt-2 text-sm text-muted">{t.customerEmail} · via {t.source} · {t.createdAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST</p>
-      <div className="mt-3 flex flex-wrap gap-1.5"><Urgency u={t.urgency} /><Topic t={t.topic} /><Redactions r={t.redactions} /></div>
+      <div className="mt-3 flex flex-wrap items-center gap-1.5"><Urgency u={t.urgency} /><Topic t={t.topic} /><Injection flags={t.injectionFlags} /><Redactions r={t.redactions} />
+        <span className="text-xs text-muted">sorted by {t.classifiedBy === "ai" ? `AI (${t.classifyModel})` : "rules"}</span></div>
+      {t.injectionFlags.length > 0 && (
+        <p role="note" className="mt-5 flex gap-3 rounded-2xl border border-red/30 bg-red-soft p-4 text-sm text-red">
+          <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span>This message contains text aimed at the AI ({t.injectionFlags.join(", ")}). It&apos;s treated as data only, and any draft for this ticket can&apos;t make a commitment without a person approving it.</span>
+        </p>
+      )}
+      {t.duplicateOf && <p className="mt-3 text-sm text-muted">Same customer has an open ticket on this topic: <Link className="link" href={`/app/tickets/${t.duplicateOf}`}>see the earlier ticket</Link>.</p>}
       <div className="mt-8"><ViewToggle original={t.body} redacted={t.bodyRedacted} /></div>
       <section aria-labelledby="sources" className="mt-8">
         <h2 id="sources" className="font-semibold">Policy a draft could cite</h2>

@@ -17,3 +17,12 @@ export function Redactions({ r }: { r: Record<string, number> }) {
   if (!n) return null;
   return <span className="chip border-accent/30 bg-accent-soft text-accent" title={Object.entries(r).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(", ")}>{n} hidden from AI</span>;
 }
+
+export function Injection({ flags }: { flags: string[] }) {
+  if (!flags.length) return null;
+  return <span className="chip border-red/30 bg-red-soft text-red" title={flags.join(", ")}>instructions to AI</span>;
+}
+export function Duplicate({ of }: { of: string | null }) {
+  if (!of) return null;
+  return <span className="chip border-line bg-sunk text-muted">possible duplicate</span>;
+}

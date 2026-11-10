@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "vercel-build": "drizzle-kit migrate && next build"
+    "vercel-build": "drizzle-kit migrate && next build",
+    "eval": "tsx scripts/eval.mts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

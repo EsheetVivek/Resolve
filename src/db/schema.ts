@@ -76,9 +76,15 @@ export const tickets = pgTable("tickets", {
   topic: text("topic"),
   urgency: urgency("urgency"),
   duplicateOf: uuid("duplicate_of"),
+  // Keyed hash of the customer's email: lets us link a customer's tickets without decrypting.
+  customerHash: text("customer_hash"),
+  classifiedBy: text("classified_by").notNull().default("rules"), // "ai" | "rules"
+  classifyModel: text("classify_model"),
+  // Phrases that looked like instructions to the AI (prompt injection). Non-empty = flagged.
+  injectionFlags: jsonb("injection_flags").$type<string[]>().notNull().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (t) => [index().on(t.workspaceId, t.status, t.createdAt), unique().on(t.workspaceId, t.externalId)]);
+}, (t) => [index().on(t.workspaceId, t.status, t.createdAt), unique().on(t.workspaceId, t.externalId), index().on(t.workspaceId, t.customerHash, t.createdAt)]);
 
 /* ---------- AI budget ---------- */
 export const aiUsage = pgTable("ai_usage", {

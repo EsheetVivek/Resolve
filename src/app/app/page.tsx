@@ -3,7 +3,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { listTickets } from "@/lib/tickets";
 import { requireMember } from "@/lib/session";
-import { Redactions, Topic, Urgency } from "@/components/badges";
+import { Duplicate, Injection, Redactions, Topic, Urgency } from "@/components/badges";
 
 export const metadata: Metadata = { title: "Inbox" };
 
@@ -33,7 +33,7 @@ export default async function Inbox() {
               <Link href={`/app/tickets/${t.id}`} className="flex flex-col gap-2 px-5 py-4 transition hover:bg-sunk/60 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{t.subject}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5"><Urgency u={t.urgency} /><Topic t={t.topic} /><Redactions r={t.redactions} /></div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5"><Urgency u={t.urgency} /><Topic t={t.topic} /><Injection flags={t.injectionFlags} /><Duplicate of={t.duplicateOf} /><Redactions r={t.redactions} /></div>
                 </div>
                 <p className="shrink-0 font-mono text-xs text-muted">{rel(t.createdAt)}</p>
               </Link>

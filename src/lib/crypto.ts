@@ -49,3 +49,10 @@ export function verifyWebhook(secret: string, body: string, header: string | nul
   const given = Buffer.from(parts.v1);
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
+
+/** Keyed, non-reversible hash for matching values (e.g. a customer's email) without storing them in clear. */
+export function lookupHash(value: string): string {
+  const raw = process.env.FIELD_ENCRYPTION_KEY;
+  if (!raw) throw new Error("FIELD_ENCRYPTION_KEY is not set");
+  return createHmac("sha256", Buffer.from(raw, "base64")).update(`lookup:${value.trim().toLowerCase()}`).digest("base64url");
+}

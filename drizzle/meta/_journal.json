@@ -15,6 +15,13 @@
       "when": 1794309998049,
       "tag": "0001_policy_library",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794311198959,
+      "tag": "0002_classification",
+      "breakpoints": true
     }
   ]
 }

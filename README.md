@@ -16,12 +16,19 @@ Docs: [PRD](docs/01-PRD.md) · [System design](docs/02-SYSTEM-DESIGN.md) · [Thr
 | --- | --- |
 | 1. Skeleton: auth, workspaces, inbox, PII redaction, signed webhook, AI adapter with daily cap, CI | Done |
 | 2. Policy library: immutable versions, one-statement passages, workspace-scoped search | Done |
-| 3. AI sorting + duplicate linking + evals | Next |
-| 4. Cited drafting + commitment detection + approval with authority | |
+| 3. AI sorting, injection detection, duplicate linking, labelled eval in CI | Done ([report](evals/report.md)) |
+| 4. Cited drafting + commitment detection + approval with authority | Next |
 | 5. Dashboard (SLA, acceptance, cost) | |
 | 6. Security suite + OWASP ZAP | |
 | 7. Load test | |
 | 8. Case study | |
+
+Milestone 3 (5 more tests, 37 total, plus the eval): the model proposes topic, urgency and whether a
+ticket tries to instruct the AI; code validates the answer and falls back to rules on any error. The
+injection flag is rules OR model, so the model can add a flag but never clear one. A customer's open
+tickets on the same topic are linked by a keyed hash of their email (never decrypted for matching).
+Eval: 55 hand-labelled synthetic tickets incl. 10 attacks and look-alikes; rules baseline 87.3% topic,
+100% attacks caught, 1 false alarm in 45. The AI arm runs in CI when the Groq key secret is present.
 
 Milestone 2 (11 more tests, 32 total): policies split into one-statement passages with stable labels
 ("Billing §2.2"), published versions are immutable (old drafts can always show what they cited),

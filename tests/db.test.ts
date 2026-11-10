@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import { complete, setProvider, AiUnavailable } from "@/lib/ai";
 import { createTicket, getTicket, listTickets } from "@/lib/tickets";
@@ -59,6 +59,16 @@ const url = process.env.DATABASE_URL;
     expect(two).toEqual({ id: one.id, duplicate: true });
   });
 
+  it("classifies new tickets with the model through the budgeted adapter, and links a customer's open duplicate", async () => {
+    setProvider({ name: "fake", complete: async () => ({ text: '{"topic":"delivery","urgency":"high","instructions_to_ai":false}', tokens: 5, model: "fake" }) });
+    const one = await createTicket(db, { workspaceId: A, source: "form", email: "Nina@Example.com", subject: "Late parcel", body: "Still not here" });
+    const two = await createTicket(db, { workspaceId: A, source: "form", email: "nina@example.com ", subject: "Parcel again", body: "Any update?" });
+    const t2 = await getTicket(db, A, two.id);
+    expect(t2).toMatchObject({ topic: "delivery", urgency: "high", classifiedBy: "ai", duplicateOf: one.id });
+    const other = await createTicket(db, { workspaceId: B, source: "form", email: "nina@example.com", subject: "Late parcel", body: "Still not here" });
+    expect((await getTicket(db, B, other.id))?.duplicateOf).toBeNull(); // never linked across workspaces
+  });
+
   it("refuses to send unredacted text to a model", async () => {
     setProvider({ name: "fake", complete: async () => ({ text: "ok", tokens: 1, model: "fake" }) });
     await expect(complete(db, { workspaceId: A, system: "s", task: "t", data: "my email is a@b.co" })).rejects.toMatchObject({ reason: "pii" });
@@ -73,7 +83,7 @@ const url = process.env.DATABASE_URL;
     expect(results.filter((r) => r.status === "fulfilled").length).toBe(10);
     expect(results.filter((r) => r.status === "rejected").every((r) => (r as PromiseRejectedResult).reason instanceof AiUnavailable && (r as PromiseRejectedResult).reason.reason === "budget")).toBe(true);
     expect(calls).toBe(10);
-    const [u] = await db.select().from(schema.aiUsage).where(eq(schema.aiUsage.workspaceId, B));
+    const [u] = await db.select().from(schema.aiUsage).where(and(eq(schema.aiUsage.workspaceId, B), eq(schema.aiUsage.day, day)));
     expect(u.calls).toBe(10);
     expect(u.tokens).toBe(30);
   });

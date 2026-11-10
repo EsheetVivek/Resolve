@@ -39,7 +39,7 @@ export async function ensureWorkspace(db: DB, user: { id: string; name?: string 
     return w;
   });
   if (!ws) return (await membershipFor(db, user.id))!;
-  for (const t of SAMPLE_TICKETS) await createTicket(db, { workspaceId: ws.id, source: "form", ...t });
+  for (const t of SAMPLE_TICKETS) await createTicket(db, { workspaceId: ws.id, source: "form", ai: false, ...t });
   await ensureSamplePolicies(db, { workspaceId: ws.id, userId: user.id });
   return (await membershipFor(db, user.id))!;
 }
