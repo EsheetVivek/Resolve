@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Resolve: a calm casebook. Ink on warm paper; green means "verified against policy", amber means
+   "this commits the company", red means "flagged". Pairs meet WCAG AA in both themes. */
+:root {
+  --paper: #f6f5f1; --card: #fffefb; --sunk: #eeece5; --ink: #16191e; --muted: #5d636c; --line: #e1ded5;
+  --accent: #0d6e53; --accent-ink: #ffffff; --accent-soft: #dcefe7;
+  --amber: #8a5300; --amber-soft: #f8ead2; --red: #b3261e; --red-soft: #f9e0dd;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #111316; --card: #181b1f; --sunk: #1f2328; --ink: #eceae4; --muted: #a2a7ae; --line: #2c3036;
+    --accent: #5cc9a4; --accent-ink: #06231a; --accent-soft: #15302a;
+    --amber: #f0b45a; --amber-soft: #33270f; --red: #f2857c; --red-soft: #3a1b18;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper); --color-card: var(--card); --color-sunk: var(--sunk); --color-ink: var(--ink);
+  --color-muted: var(--muted); --color-line: var(--line); --color-accent: var(--accent); --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft); --color-amber: var(--amber); --color-amber-soft: var(--amber-soft);
+  --color-red: var(--red); --color-red-soft: var(--red-soft);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: var(--font-serif), Georgia, serif;
+}
+
+body { background: var(--paper); color: var(--ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+@utility serif { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; }
+@utility k { @apply font-mono text-[11px] uppercase tracking-[0.14em] text-muted; }
+@utility card { @apply rounded-2xl border border-line bg-card; }
+@utility btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium transition active:scale-[.98] disabled:opacity-50; }
+@utility btn-primary { @apply btn bg-ink text-paper hover:bg-accent hover:text-accent-ink; }
+@utility btn-secondary { @apply btn border border-line bg-card hover:border-ink; }
+@utility btn-quiet { @apply btn text-muted hover:bg-sunk hover:text-ink; }
+@utility chip { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[11px]; }
+@utility link { @apply underline decoration-accent/40 underline-offset-4 hover:decoration-accent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
